@@ -64,6 +64,7 @@ namespace Manina.Windows.Forms
             InitializeComponent();
 
             paneToolStripButton_Click(null, null); // start in pane mode
+            LoadSettings();
 
             // Setup the background worker
             Application.Idle += new EventHandler(Application_Idle);
@@ -158,6 +159,8 @@ namespace Manina.Windows.Forms
             toolStripStatusLabel1.Text = string.Format("{0} Items: {1} Selected{3}, {2} Checked",
                 imageListView1.Items.Count, imageListView1.SelectedItems.Count, imageListView1.CheckedItems.Count,
                 selname);
+
+            Text = "MangaEdit :" + Path.GetFileName(_zippath) + selname;
 
             groupAscendingToolStripMenuItem.Checked = imageListView1.GroupOrder == SortOrder.Ascending;
             groupDescendingToolStripMenuItem.Checked = imageListView1.GroupOrder == SortOrder.Descending;
@@ -600,10 +603,12 @@ namespace Manina.Windows.Forms
         {
             OpenFileDialog ofd = new OpenFileDialog();
             ofd.Filter = "Archive Files|*.zip;*.7z;*.cbr;*.cbz;*.rar";
-            // ofd.InitialDirectory // TODO remember & restore
+            if (!string.IsNullOrEmpty(LastFile))
+                ofd.InitialDirectory = Path.GetDirectoryName(LastFile);
             ofd.Multiselect = false;
             if (ofd.ShowDialog() != DialogResult.OK)
                 return;
+            LastFile = ofd.FileName;
             var filename = ofd.FileName;
             BuildListViewZip(filename); // TODO background?
         }
@@ -724,26 +729,6 @@ namespace Manina.Windows.Forms
             return false;
         }
 
-        private Image TextToImage(byte [] arr)
-        {
-            var text = System.Text.Encoding.Default.GetString(arr);
-            using (Bitmap bmp = new Bitmap(1, 1))
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                using (Font f = new Font("Courier New", 14))
-                {
-                    SizeF stringSz = g.MeasureString(text, f);
-                    Bitmap bmp2 = new Bitmap(bmp, (int)Math.Ceiling(stringSz.Width), 
-                                                  (int)Math.Ceiling(stringSz.Height));
-                    using (Graphics g2 = Graphics.FromImage(bmp2))
-                    {
-                        g.DrawString(text, f, Brushes.Black, 0, 0);
-                    }
-                    return bmp2;
-                }
-            }
-        }
-
         private void button1_Click(object sender, EventArgs e)
         {
             if (imageListView1.SelectedItems.Count < 1)
@@ -766,8 +751,6 @@ namespace Manina.Windows.Forms
 
         private void WriteZip(string outpath)
         {
-            MessageBox.Show(outpath);
-
             string tempdir = Path.Combine(Path.GetTempPath(), "MangaEdit");
             if (Directory.Exists(tempdir))
                 Directory.Delete(tempdir, true);
@@ -791,6 +774,54 @@ namespace Manina.Windows.Forms
             comp.ArchiveFormat = OutArchiveFormat.Zip;
             comp.DirectoryStructure = true;
             comp.CompressDirectory(tempdir, outpath, recursion: true);
+        }
+
+        private void DemoForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            SaveSettings();
+        }
+
+        private string LastFile { get; set; }
+
+        private void LoadSettings()
+        {
+            var _mysettings = DASettings.Load();
+
+            // No existing settings. Use default.
+            if (_mysettings.Fake)
+            {
+                StartPosition = FormStartPosition.CenterScreen;
+            }
+            else
+            {
+                // restore windows position
+                StartPosition = FormStartPosition.Manual;
+                Top = _mysettings.WinTop;
+                Left = _mysettings.WinLeft;
+                Height = _mysettings.WinHigh;
+                Width = _mysettings.WinWide;
+                LastFile = _mysettings.LastPath;
+
+                imageListView1.PaneWidth = _mysettings.SplitLoc;
+                imageListView1.ThumbnailSize = new Size(_mysettings.Thumbsize,
+                    _mysettings.Thumbsize);
+            }
+
+        }
+        private void SaveSettings()
+        {
+            var _mysettings = new DASettings();
+            var bounds = DesktopBounds;
+            _mysettings.WinTop = Location.Y;
+            _mysettings.WinLeft = Location.X;
+            _mysettings.WinHigh = Size.Height;
+            _mysettings.WinWide = Size.Width;
+            _mysettings.Fake = false;
+            _mysettings.LastPath = LastFile;
+            //_mysettings.PathHistory = mnuMRU.GetFiles().ToList();
+            _mysettings.SplitLoc = imageListView1.PaneWidth;
+            _mysettings.Thumbsize = imageListView1.ThumbnailSize.Height;
+            _mysettings.Save();
         }
     }
 
