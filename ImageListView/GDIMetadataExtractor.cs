@@ -368,6 +368,11 @@ namespace Manina.Windows.Forms
         {
             return InitViaBmp(path);
         }
+
+        public virtual Metadata GetMetadata(Image img)
+        {
+            return InitViaBmp(img);
+        }
         #endregion
     }
 }

@@ -32,6 +32,8 @@ namespace Manina.Windows.Forms
         /// <param name="path">Filepath of image</param>
         Metadata GetMetadata(string path);
 
+        Metadata GetMetadata(Image img);
+
         /// <summary>
         /// Creates a thumbnail from the given image file.
         /// </summary>
