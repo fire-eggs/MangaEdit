@@ -102,10 +102,11 @@ namespace Manina.Windows.Forms
             if (!Directory.Exists(cacheDir))
                 Directory.CreateDirectory(cacheDir);
             imageListView1.PersistentCacheDirectory = cacheDir;
-            imageListView1.Columns.Add(ColumnType.Name);
-            imageListView1.Columns.Add(ColumnType.Dimensions);
-            imageListView1.Columns.Add(ColumnType.FileSize);
-            imageListView1.Columns.Add(ColumnType.FolderName);
+
+            //imageListView1.Columns.Add(ColumnType.Name);
+            //imageListView1.Columns.Add(ColumnType.Dimensions);
+            //imageListView1.Columns.Add(ColumnType.FileSize);
+            //imageListView1.Columns.Add(ColumnType.FolderName);
 
             TreeNode node = new TreeNode("Loading...", 3, 3);
             node.Tag = null;
@@ -402,12 +403,10 @@ namespace Manina.Windows.Forms
 
             button1.Enabled = any;
             button2.Enabled = any;
-            label1.Text = "";
             if (!any)
                 return;
 
             sel = imageListView1.SelectedItems[0];
-            label1.Text = sel.Text;
         }
         #endregion
 
@@ -682,6 +681,8 @@ namespace Manina.Windows.Forms
                     ImageListViewItem item = new ImageListViewItem((object)fp, fn);
                     imageListView1.Items.Add(item, adapt);
                 }
+
+                imageListView1.Items[0].Selected = true;
 
                 imageListView1.ResumeLayout();
                 _zippath = zippath;
