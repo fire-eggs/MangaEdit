@@ -756,49 +756,60 @@ namespace Manina.Windows.Forms
 
         private void WriteZip(string outpath)
         {
-            string tempdir = Path.Combine(Path.GetTempPath(), "MangaEdit");
-            if (Directory.Exists(tempdir))
-                Directory.Delete(tempdir, true);
-            Directory.CreateDirectory(tempdir);
-
-            using (SevenZipExtractor extr = new SevenZipExtractor(_zippath))
+            try
             {
-                foreach (var item in imageListView1.Items)
-                {
-                    string itempath = (string)item.VirtualItemKey;
-                    string outpath2 = Path.Combine(tempdir, itempath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(outpath2));
+                Cursor = Cursors.WaitCursor;
 
-                    // For resize:
-                    // 1. if image.Hight > targetHigh
-                    // a. Use adaptor.GetThumbnail() to get image of size(65535,targetHigh)
-                    // b. SaveJpeg(targetfile, image)
-                    if (item.Dimensions.Height > targetheight)
+                string tempdir = Path.Combine(Path.GetTempPath(), "MangaEdit");
+                if (Directory.Exists(tempdir))
+                    Directory.Delete(tempdir, true);
+                Directory.CreateDirectory(tempdir);
+
+                using (SevenZipExtractor extr = new SevenZipExtractor(_zippath))
+                {
+                    foreach (var item in imageListView1.Items)
                     {
-                        using (var newimg = item.Adaptor.GetThumbnail(item.VirtualItemKey,
-                            new Size(65535, targetheight),
-                            UseEmbeddedThumbnails.Never, false))
+                        string itempath = (string)item.VirtualItemKey;
+                        string outpath2 = Path.Combine(tempdir, itempath);
+                        Directory.CreateDirectory(Path.GetDirectoryName(outpath2));
+
+                        // For resize:
+                        // 1. if image.Hight > targetHigh
+                        // a. Use adaptor.GetThumbnail() to get image of size(65535,targetHigh)
+                        // b. SaveJpeg(targetfile, image)
+                        if (item.Dimensions.Height > targetheight)
                         {
-                            SaveJpeg(outpath2, newimg);
+                            using (var newimg = item.Adaptor.GetThumbnail(item.VirtualItemKey,
+                                new Size(65535, targetheight),
+                                UseEmbeddedThumbnails.Never, false))
+                            {
+                                SaveJpeg(outpath2, newimg);
+                            }
                         }
-                    }
-                    else
-                    {
-                        using (FileStream fs = new FileStream(outpath2, FileMode.Create))
+                        else
                         {
-                            extr.ExtractFile(itempath, fs);
+                            // No resize but make sure save to jpeg
+                            using (var newimg = item.Adaptor.GetThumbnail(item.VirtualItemKey,
+                                new Size(65535, 65535),
+                                UseEmbeddedThumbnails.Never, false))
+                            {
+                                SaveJpeg(outpath2, newimg);
+                            }
                         }
                     }
                 }
+
+                var comp = new SevenZipCompressor();
+                comp.ArchiveFormat = OutArchiveFormat.Zip;
+                comp.DirectoryStructure = true;
+                comp.CompressDirectory(tempdir, outpath, recursion: true);
+
+                Directory.Delete(tempdir, true);
             }
-
-            var comp = new SevenZipCompressor();
-            comp.ArchiveFormat = OutArchiveFormat.Zip;
-            comp.DirectoryStructure = true;
-            comp.CompressDirectory(tempdir, outpath, recursion: true);
-
-            Directory.Delete(tempdir, true);
-
+            finally
+            {
+                Cursor = Cursors.Arrow;
+            }
         }
 
 
