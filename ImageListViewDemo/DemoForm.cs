@@ -173,16 +173,6 @@ namespace Manina.Windows.Forms
         #endregion
 
         #region Set ImageListView options
-        private void label1_Click(object sender, EventArgs e)
-        {
-            if (ofBrowseImage.ShowDialog() == DialogResult.OK)
-            {
-                foreach (string file in ofBrowseImage.FileNames)
-                {
-                    imageListView1.Items.Add(file);
-                }
-            }
-        }
 
         private void checkboxAlignmentToolStripButton_Click(object sender, EventArgs e)
         {
@@ -397,21 +387,6 @@ namespace Manina.Windows.Forms
 
         #endregion
 
-        #region Set selected image to PropertyGrid
-        private void imageListView1_SelectionChanged(object sender, EventArgs e)
-        {
-            ImageListViewItem sel = null;
-            bool any = (imageListView1.SelectedItems.Count > 0);
-
-            button1.Enabled = any;
-            button2.Enabled = any;
-            if (!any)
-                return;
-
-            sel = imageListView1.SelectedItems[0];
-        }
-        #endregion
-
         #region Change Selection/Checkboxes
         private void imageListView1_KeyDown(object sender, KeyEventArgs e)
         {
@@ -436,167 +411,18 @@ namespace Manina.Windows.Forms
         }
         #endregion
 
-        #region Update folder list asynchronously
-        private void PopulateListView(DirectoryInfo path)
+        private void imageListView1_SelectionChanged(object sender, EventArgs e)
         {
-            imageListView1.Items.Clear();
-            imageListView1.SuspendLayout();
-            int i = 0;
-            foreach (FileInfo p in path.GetFiles("*.*"))
-            {
-                if (p.Name.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                    p.Name.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                    p.Name.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase) ||
-                    p.Name.EndsWith(".ico", StringComparison.OrdinalIgnoreCase) ||
-                    p.Name.EndsWith(".cur", StringComparison.OrdinalIgnoreCase) ||
-                    p.Name.EndsWith(".emf", StringComparison.OrdinalIgnoreCase) ||
-                    p.Name.EndsWith(".wmf", StringComparison.OrdinalIgnoreCase) ||
-                    p.Name.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) ||
-                    p.Name.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase) ||
-                    p.Name.EndsWith(".gif", StringComparison.OrdinalIgnoreCase))
-                {
-                    imageListView1.Items.Add(p.FullName);
-                    if (i == 1) imageListView1.Items[imageListView1.Items.Count - 1].Enabled = false;
-                    i++;
-                    if (i == 3) i = 0;
-                }
-            }
-            imageListView1.ResumeLayout();
-        }
+            ImageListViewItem sel = null;
+            bool any = (imageListView1.SelectedItems.Count > 0);
 
-        void bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            KeyValuePair<TreeNode, List<TreeNode>> kv = (KeyValuePair<TreeNode, List<TreeNode>>)e.Result;
-            TreeNode rootNode = kv.Key;
-            List<TreeNode> nodes = kv.Value;
-            if (rootNode.Tag == null)
-            {
-                //treeView1.Nodes.Clear();
-                //foreach (TreeNode node in nodes)
-                //    treeView1.Nodes.Add(node);
-            }
-            else
-            {
-                KeyValuePair<DirectoryInfo, bool> ktag = (KeyValuePair<DirectoryInfo, bool>)rootNode.Tag;
-                rootNode.Tag = new KeyValuePair<DirectoryInfo, bool>(ktag.Key, true);
-                rootNode.Nodes.Clear();
-                foreach (TreeNode node in nodes)
-                    rootNode.Nodes.Add(node);
-            }
-        }
-
-        private static void bw_DoWork(object sender, DoWorkEventArgs e)
-        {
-            TreeNode rootNode = e.Argument as TreeNode;
-
-            List<TreeNode> nodes = GetNodes(rootNode);
-
-            e.Result = new KeyValuePair<TreeNode, List<TreeNode>>(rootNode, nodes);
-        }
-
-        private static List<TreeNode> GetNodes(TreeNode rootNode)
-        {
-            if (rootNode.Tag == null)
-            {
-                List<TreeNode> volNodes = new List<TreeNode>();
-                foreach (DriveInfo info in System.IO.DriveInfo.GetDrives())
-                {
-                    if (info.IsReady && info.DriveType == DriveType.Fixed)
-                    {
-                        DirectoryInfo rootPath = info.RootDirectory;
-                        TreeNode volNode = new TreeNode(info.VolumeLabel + " (" + info.Name + ")", 0, 0);
-                        volNode.Tag = new KeyValuePair<DirectoryInfo, bool>(rootPath, false);
-                        List<TreeNode> nodes = GetNodes(volNode);
-                        volNode.Tag = new KeyValuePair<DirectoryInfo, bool>(rootPath, true);
-                        volNode.Nodes.Clear();
-                        foreach (TreeNode node in nodes)
-                            volNode.Nodes.Add(node);
-
-                        volNode.Expand();
-                        volNodes.Add(volNode);
-                    }
-                }
-
-                return volNodes;
-            }
-            else
-            {
-                KeyValuePair<DirectoryInfo, bool> kv = (KeyValuePair<DirectoryInfo, bool>)rootNode.Tag;
-                bool done = kv.Value;
-                if (done)
-                    return new List<TreeNode>();
-
-                DirectoryInfo rootPath = kv.Key;
-                List<TreeNode> nodes = new List<TreeNode>();
-
-                DirectoryInfo[] dirs = new DirectoryInfo[0];
-                try
-                {
-                    dirs = rootPath.GetDirectories();
-                }
-                catch
-                {
-                    return new List<TreeNode>();
-                }
-                foreach (DirectoryInfo info in dirs)
-                {
-                    if ((info.Attributes & FileAttributes.System) != FileAttributes.System)
-                    {
-                        TreeNode aNode = new TreeNode(info.Name, 1, 2);
-                        aNode.Tag = new KeyValuePair<DirectoryInfo, bool>(info, false);
-                        GetDirectories(aNode);
-                        nodes.Add(aNode);
-                    }
-                }
-                return nodes;
-            }
-        }
-
-        private static void GetDirectories(TreeNode node)
-        {
-            KeyValuePair<DirectoryInfo, bool> ktag = (KeyValuePair<DirectoryInfo, bool>)node.Tag;
-            DirectoryInfo rootPath = ktag.Key;
-
-            DirectoryInfo[] dirs = new DirectoryInfo[0];
-            try
-            {
-                dirs = rootPath.GetDirectories();
-            }
-            catch
-            {
+            btnDelete.Enabled = any;
+            btnRename.Enabled = false; // TODO rename NYI any;
+            if (!any)
                 return;
-            }
-            foreach (DirectoryInfo info in dirs)
-            {
-                if ((info.Attributes & FileAttributes.System) != FileAttributes.System)
-                {
-                    TreeNode aNode = new TreeNode(info.Name, 1, 2);
-                    aNode.Tag = new KeyValuePair<DirectoryInfo, bool>(info, false);
-                    if (GetDirCount(info) != 0)
-                    {
-                        aNode.Nodes.Add("Dummy1");
-                    }
-                    node.Nodes.Add(aNode);
-                }
-            }
-            node.Tag = new KeyValuePair<DirectoryInfo, bool>(ktag.Key, true);
-        }
 
-        private static int GetDirCount(DirectoryInfo rootPath)
-        {
-            DirectoryInfo[] dirs = new DirectoryInfo[0];
-            try
-            {
-                dirs = rootPath.GetDirectories();
-            }
-            catch
-            {
-                return 0;
-            }
-
-            return dirs.Length;
+            sel = imageListView1.SelectedItems[0];
         }
-        #endregion
 
         private string _zippath;
 
@@ -611,12 +437,20 @@ namespace Manina.Windows.Forms
                 return;
             LastFile = ofd.FileName;
             var filename = ofd.FileName;
-            BuildListViewZip(filename); // TODO background?
+            try
+            {
+                Cursor = Cursors.WaitCursor;
+                BuildListViewZip(filename); // TODO background?
+            }
+            finally
+            {
+                Cursor = Cursors.Arrow;
+            }
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO clean up temp dirs 
+            // TODO clean up temp dirs ?
             Close();
         }
 
@@ -629,7 +463,6 @@ namespace Manina.Windows.Forms
             // 5. scan archive file.
             //  a. supported images: add as virtual item, get a thumbnail
             //  b. other files: what to do?
-
 
             if (!InitArchive())
                 return;
@@ -667,6 +500,7 @@ namespace Manina.Windows.Forms
                         filelist.Add(entry.FileName);
                     }
                     // TODO other files - esp. zip of zips
+                    // TODO consider adding all files to filelist; have adaptor provide placeholder
                 }
 
                 var arr = filelist.ToArray();
@@ -689,8 +523,6 @@ namespace Manina.Windows.Forms
                 imageListView1.ResumeLayout();
                 _zippath = zippath;
             }
-
-
         }
 
         private bool InitArchive()
@@ -726,24 +558,35 @@ namespace Manina.Windows.Forms
         private bool isFoo(string ext, string [] list)
         { 
             var ext2 = ext.ToLower();
-            foreach (var img in list)
-                if (ext2 == img)
-                    return true;
-            return false;
+            return list.FirstOrDefault(x => x == ext2) != null;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnDelete_Click(object sender, EventArgs e)
         {
             if (imageListView1.SelectedItems.Count < 1)
                 return;
-            imageListView1.Items.Remove(imageListView1.SelectedItems[0]);
+
+            //imageListView1.Items.Remove(imageListView1.SelectedItems[0]);
+
+            // Remove the selected item AND set selection to the next item.
+            var tofind = imageListView1.SelectedItems[0];
+            int i = 0;
+            foreach (var item in imageListView1.Items)
+            {
+                if (item == tofind)
+                    break;
+                i++;
+            }
+            imageListView1.Items.RemoveAt(i);
+            if (i >= imageListView1.Items.Count)
+                i = imageListView1.Items.Count - 1;
+            imageListView1.Items[i].Selected = true;
         }
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var sfd = new SaveFileDialog();
             sfd.FileName = Path.GetFileNameWithoutExtension(_zippath) + "_out_.zip";
-            //sfd.FileName = Path.GetFileName(_zippath);
             sfd.InitialDirectory = Path.GetDirectoryName(_zippath);
             sfd.OverwritePrompt = true;
             if (DialogResult.OK == sfd.ShowDialog())
@@ -752,7 +595,8 @@ namespace Manina.Windows.Forms
             }
         }
 
-        private int targetheight = 1400;
+        private int targetheight = 1400; // TODO consider GUI mechanism?
+        private static long targetJpegQuality = 80L; // TODO consider GUI mechanism?
 
         private void WriteZip(string outpath)
         {
@@ -815,7 +659,7 @@ namespace Manina.Windows.Forms
 
         public static void SaveJpeg(string path, Image image)
         {
-            SaveJpeg(path, image, 80L);
+            SaveJpeg(path, image, targetJpegQuality);
         }
         public static void SaveJpeg(string path, Image image, long quality)
         {
