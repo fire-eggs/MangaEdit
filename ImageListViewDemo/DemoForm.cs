@@ -7,6 +7,8 @@ using System.Reflection;
 using System.IO;
 using System.Net;
 using SevenZip;
+using System.Drawing.Imaging;
+using System.Linq;
 
 namespace Manina.Windows.Forms
 {
@@ -750,6 +752,8 @@ namespace Manina.Windows.Forms
             }
         }
 
+        private int targetheight = 1400;
+
         private void WriteZip(string outpath)
         {
             string tempdir = Path.Combine(Path.GetTempPath(), "MangaEdit");
@@ -764,9 +768,26 @@ namespace Manina.Windows.Forms
                     string itempath = (string)item.VirtualItemKey;
                     string outpath2 = Path.Combine(tempdir, itempath);
                     Directory.CreateDirectory(Path.GetDirectoryName(outpath2));
-                    using (FileStream fs = new FileStream(outpath2, FileMode.Create))
+
+                    // For resize:
+                    // 1. if image.Hight > targetHigh
+                    // a. Use adaptor.GetThumbnail() to get image of size(65535,targetHigh)
+                    // b. SaveJpeg(targetfile, image)
+                    if (item.Dimensions.Height > targetheight)
                     {
-                        extr.ExtractFile(itempath, fs);
+                        using (var newimg = item.Adaptor.GetThumbnail(item.VirtualItemKey,
+                            new Size(65535, targetheight),
+                            UseEmbeddedThumbnails.Never, false))
+                        {
+                            SaveJpeg(outpath2, newimg);
+                        }
+                    }
+                    else
+                    {
+                        using (FileStream fs = new FileStream(outpath2, FileMode.Create))
+                        {
+                            extr.ExtractFile(itempath, fs);
+                        }
                     }
                 }
             }
@@ -775,8 +796,26 @@ namespace Manina.Windows.Forms
             comp.ArchiveFormat = OutArchiveFormat.Zip;
             comp.DirectoryStructure = true;
             comp.CompressDirectory(tempdir, outpath, recursion: true);
+
+            Directory.Delete(tempdir, true);
+
         }
 
+
+        public static void SaveJpeg(string path, Image image)
+        {
+            SaveJpeg(path, image, 80L);
+        }
+        public static void SaveJpeg(string path, Image image, long quality)
+        {
+            using (var encoderParameters = new System.Drawing.Imaging.EncoderParameters(1))
+            using (var encoderParameter = new System.Drawing.Imaging.EncoderParameter(Encoder.Quality, quality))
+            {
+                ImageCodecInfo codecInfo = ImageCodecInfo.GetImageDecoders().First(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
+                encoderParameters.Param[0] = encoderParameter;
+                image.Save(path, codecInfo, encoderParameters);
+            }
+        }
         private void DemoForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             SaveSettings();
