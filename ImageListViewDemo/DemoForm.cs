@@ -581,6 +581,7 @@ namespace Manina.Windows.Forms
             if (i >= imageListView1.Items.Count)
                 i = imageListView1.Items.Count - 1;
             imageListView1.Items[i].Selected = true;
+            imageListView1.Items[i].Focused = true;
         }
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
