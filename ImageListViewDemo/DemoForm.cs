@@ -759,7 +759,8 @@ namespace Manina.Windows.Forms
                         {
                             return TextToImage(mem.ToArray());
                         }
-                        return Image.FromStream(mem);
+                        var ms = new MemoryStream(mem.GetBuffer());  // dispose exception if don't copy stream
+                        return Image.FromStream(ms);
                     }
                 }
             }
