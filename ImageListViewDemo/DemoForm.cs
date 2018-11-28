@@ -597,7 +597,7 @@ namespace Manina.Windows.Forms
         }
 
         private int targetheight = 1400; // TODO consider GUI mechanism?
-        private static long targetJpegQuality = 80L; // TODO consider GUI mechanism?
+        private static long targetJpegQuality = 75L; // TODO consider GUI mechanism?
 
         private void WriteZip(string outpath)
         {
