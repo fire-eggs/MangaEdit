@@ -728,10 +728,11 @@ namespace Manina.Windows.Forms
 
         public int Compare(string filePath1, string filePath2)
         {
-            var basename1 = Path.GetFileName(filePath1);
-            var basename2 = Path.GetFileName(filePath2);
+            //var basename1 = Path.GetFileName(filePath1);
+            //var basename2 = Path.GetFileName(filePath2);
 
-            return StrCmpLogicalW(basename1, basename2);
+            //return StrCmpLogicalW(basename1, basename2);
+            return StrCmpLogicalW(filePath1, filePath2);
         }
 
     }
