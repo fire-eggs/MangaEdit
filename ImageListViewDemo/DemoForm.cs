@@ -450,7 +450,6 @@ namespace Manina.Windows.Forms
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO clean up temp dirs ?
             Close();
         }
 
@@ -565,8 +564,6 @@ namespace Manina.Windows.Forms
         {
             if (imageListView1.SelectedItems.Count < 1)
                 return;
-
-            //imageListView1.Items.Remove(imageListView1.SelectedItems[0]);
 
             // Remove the selected item AND set selection to the next item.
             var tofind = imageListView1.SelectedItems[0];
@@ -776,12 +773,13 @@ namespace Manina.Windows.Forms
             if (disposed)
                 return null;
 
-            Image img = UnpackImage((string)key);
-            if (img == null)
-                return null;
-            Image ret = Extractor.Instance.GetThumbnail(img, size, useEmbeddedThumbnails, useExifOrientation);
-            img.Dispose();
-            return ret;
+            using (Image img = UnpackImage((string)key))
+            {
+                if (img == null)
+                    return null;
+                Image ret = Extractor.Instance.GetThumbnail(img, size, useEmbeddedThumbnails, useExifOrientation);
+                return ret;
+            }
         }
 
         public override Utility.Tuple<ColumnType, string, object>[] GetDetails(object key)
@@ -789,12 +787,14 @@ namespace Manina.Windows.Forms
             if (disposed)
                 return null;
 
-            Image img = UnpackImage((string)key);
-            List<Utility.Tuple<ColumnType, string, object>> details = new List<Utility.Tuple<ColumnType, string, object>>();
-
-            // Get file info
-            if (img != null)
+            using (Image img = UnpackImage((string)key))
             {
+                List<Utility.Tuple<ColumnType, string, object>> details = new List<Utility.Tuple<ColumnType, string, object>>();
+
+                // Get file info
+                if (img == null)
+                    return details.ToArray();
+
                 //FileInfo info = new FileInfo(filename);
                 //details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateCreated, string.Empty, info.CreationTime));
                 //details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.DateAccessed, string.Empty, info.LastAccessTime));
@@ -821,9 +821,9 @@ namespace Manina.Windows.Forms
                 details.Add(new Utility.Tuple<ColumnType, string, object>(ColumnType.FocalLength, string.Empty, (float)metadata.FocalLength));
 
                 img.Dispose();
-            }
 
-            return details.ToArray();
+                return details.ToArray();
+            }
         }
 
 
@@ -852,8 +852,9 @@ namespace Manina.Windows.Forms
     }
 }
 
-// TODO imagelistview splitter pos
-// TODO window size & pos
 // TODO option to save to other file formats
 // TODO display image dimensions on select
 // TODO display ctrl+click to disable multi-select in imagelistview?
+// TODO GUI mechanisms to specify target image height / quality?
+// TODO accept Delete key to delete images?
+// TODO sort when multiple folders
